@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fequiz/database/database_helper.dart';
 
 class QuizScreen extends StatefulWidget {
   final String examTitle;
@@ -14,19 +15,32 @@ class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedOption;
   List<int?> _userAnswers = [];
+  List<Map<String, dynamic>> _questions = [];
 
-  final List<Map<String, dynamic>> _questions = List.generate(10, (index) {
-    return {
-      "questionText": "Question number ${index + 1}: What is the answer?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswerIndex": index % 4,
-    };
-  });
+  final double circleDiameter = 70.0;
+  final double contentPadding = 20.0;
+  final double verticalSpacing = 15.0;
 
   @override
   void initState() {
     super.initState();
-    _userAnswers = List.filled(_questions.length, null);
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    final dbHelper = DatabaseHelper.instance;
+    final fetchedQuestions = await dbHelper.getQuestions();
+
+    setState(() {
+      _questions = fetchedQuestions.map((q) => {
+            'questionText': q['question_text'],
+            'options': [q['option1'], q['option2'], q['option3'], q['option4']],
+            'correctAnswerIndex': q['correct_index'],
+          }).toList();
+
+      _userAnswers = List.filled(_questions.length, null);
+      _selectedOption = _userAnswers[0];
+    });
   }
 
   @override
@@ -71,7 +85,9 @@ class _QuizScreenState extends State<QuizScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Quiz Results"),
-        content: Text("You answered $correctCount out of ${_questions.length} questions correctly for the ${widget.examTitle} quiz!"),
+        content: Text(
+          "You answered $correctCount out of ${_questions.length} questions correctly for the ${widget.examTitle} quiz!",
+        ),
         actions: [
           TextButton(
             child: const Text("OK"),
@@ -90,17 +106,20 @@ class _QuizScreenState extends State<QuizScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final topBlueHeight = screenHeight * 0.28;
-    final circleDiameter = 70.0;
-    final contentPadding = 20.0;
-    final verticalSpacing = 15.0;
+    final questionCardTopOffset = topBlueHeight * 0.60;
+    final availableWidth = screenWidth - 2 * contentPadding;
 
-    final double questionCardTopOffset = topBlueHeight * 0.60;
-    final double availableWidth = screenWidth - 2 * contentPadding;
+    if (_questions.isEmpty) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.deepPurple.shade50,
       body: Stack(
         children: [
+          // Top Blue Background
           Positioned(
             top: 0,
             left: 0,
@@ -108,42 +127,61 @@ class _QuizScreenState extends State<QuizScreen> {
             height: topBlueHeight,
             child: Container(color: Colors.blue),
           ),
+
+          // Exam Title
           Positioned(
-            top: 16,
+            top: 40,
             left: contentPadding,
             right: contentPadding,
             child: SafeArea(
               bottom: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.person, size: 18, color: Colors.deepPurple),
-                        const SizedBox(width: 8),
-                        const Text("7 / 40", style: TextStyle(color: Colors.deepPurple, fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Text("${_currentQuestionIndex + 1} / ${_questions.length}",
-                        style: const TextStyle(color: Colors.white, fontSize: 14)),
-                  ),
-                ],
+              child: Text(
+                widget.examTitle,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
+
+          // Info Row
+          Positioned(
+            top: 90,
+            left: contentPadding,
+            right: contentPadding,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.person, size: 18, color: Colors.deepPurple),
+                      SizedBox(width: 8),
+                      Text("7 / 40", style: TextStyle(color: Colors.deepPurple, fontSize: 14)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Text("${_currentQuestionIndex + 1} / ${_questions.length}",
+                      style: const TextStyle(color: Colors.white, fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+
+          // Question Card
           Positioned(
             top: questionCardTopOffset,
             left: 0,
@@ -156,12 +194,6 @@ class _QuizScreenState extends State<QuizScreen> {
                   controller: _pageController,
                   itemCount: _questions.length,
                   physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentQuestionIndex = index;
-                      _selectedOption = _userAnswers[_currentQuestionIndex];
-                    });
-                  },
                   itemBuilder: (context, index) {
                     final currentQuestion = _questions[index];
                     return Padding(
@@ -219,13 +251,16 @@ class _QuizScreenState extends State<QuizScreen> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       side: BorderSide(
-                                        color: _selectedOption == optionIndex ? Colors.orange : Colors.deepPurple.shade100,
+                                        color: _selectedOption == optionIndex
+                                            ? Colors.orange
+                                            : Colors.deepPurple.shade100,
                                         width: 1.5,
                                       ),
                                     ),
                                     margin: const EdgeInsets.symmetric(vertical: 10),
                                     child: RadioListTile<int>(
-                                      title: Text(currentQuestion["options"][optionIndex], style: const TextStyle(fontSize: 17)),
+                                      title: Text(currentQuestion["options"][optionIndex],
+                                          style: const TextStyle(fontSize: 17)),
                                       value: optionIndex,
                                       groupValue: _selectedOption,
                                       onChanged: (int? val) {
@@ -249,14 +284,16 @@ class _QuizScreenState extends State<QuizScreen> {
                     );
                   },
                 ),
+
+                // Center Circle
                 Positioned(
                   top: 0,
                   child: Container(
                     width: circleDiameter,
                     height: circleDiameter,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const SweepGradient(
+                      gradient: SweepGradient(
                         colors: [Colors.deepPurple, Colors.orange, Colors.deepPurple],
                       ),
                     ),
@@ -282,6 +319,8 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
             ),
           ),
+
+          // Next Button
           Positioned(
             left: contentPadding,
             right: contentPadding,

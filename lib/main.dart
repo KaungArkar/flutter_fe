@@ -1,13 +1,7 @@
-import 'dart:async'; // For Future.delayed
+import 'dart:async';
 import 'package:flutter/material.dart';
-
-// Import necessary screens.
-// If you move ExamTypeScreen and MenuScreen to their own files,
-// you'll need to uncomment/add their imports here:
-// import 'package:fequiz/examTypeScreen.dart';
-// import 'package:fequiz/menuScreen.dart';
-import 'package:fequiz/profileScreen.dart'; // Make sure this file exists
-import 'package:fequiz/quiz.dart';         // Now imports the unified QuizScreen
+import 'package:fequiz/profileScreen.dart';
+import 'package:fequiz/quiz.dart';
 
 void main() {
   runApp(const QuizApp());
@@ -49,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: const Color(0xFF0033A0),
       body: Center(
         child: Image.asset(
-          'assets/images/quize.png', // Ensure this asset is correctly declared in pubspec.yaml
+          'assets/images/quize.png',
           width: 240,
           fit: BoxFit.contain,
         ),
@@ -67,9 +61,7 @@ class MainTabScreen extends StatefulWidget {
 
 class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 0;
-  
-  // Note: ExamTypeScreen, ProfileScreen, and MenuScreen must exist and be valid widgets.
-  // ProfileScreen is imported. ExamTypeScreen and MenuScreen are defined below in this file.
+
   final List<Widget> _pages = [
     ExamTypeScreen(),
     ProfileScreen(),
@@ -99,15 +91,10 @@ class _MainTabScreenState extends State<MainTabScreen> {
   }
 }
 
-// --- IMPORTANT: For better project structure, move the following classes
-//     into their own separate files (e.g., examTypeScreen.dart, menuScreen.dart,
-//     and potentially a utils/clippers.dart for BottomWaveClipper).
-//     Then import them at the top of this main.dart file. ---
-
 class ExamTypeScreen extends StatelessWidget {
   const ExamTypeScreen({super.key});
 
-  final List<Map<String, String>> examTypes = const [ // Added const for efficiency
+  final List<Map<String, String>> examTypes = const [
     {'year': '2024', 'month': 'October', 'image': 'assets/images/2024.png'},
     {'year': '2024', 'month': 'April', 'image': 'assets/images/20242.png'},
     {'year': '2023', 'month': 'October', 'image': 'assets/images/2023.png'},
@@ -145,8 +132,8 @@ class ExamTypeScreen extends StatelessWidget {
           Positioned(
             top: 50,
             right: 20,
-            child: CircleAvatar(
-              backgroundImage: const AssetImage('assets/images/people.png'), // Ensure asset
+            child: const CircleAvatar(
+              backgroundImage: AssetImage('assets/images/people.png'),
               radius: 20,
             ),
           ),
@@ -165,7 +152,6 @@ class ExamTypeScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          // Using the corrected QuizScreen from quiz.dart
                           builder: (context) => QuizScreen(examTitle: title),
                         ),
                       );
@@ -183,7 +169,7 @@ class ExamTypeScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              exam['image']!, // Ensure assets
+                              exam['image']!,
                               width: 80,
                               height: 80,
                               fit: BoxFit.contain,
