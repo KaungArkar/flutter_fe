@@ -1,10 +1,13 @@
+import 'package:fequiz/model/question.dart';
 import 'package:flutter/material.dart';
 import 'package:fequiz/database/database_helper.dart';
 
 class QuizScreen extends StatefulWidget {
-  final String examTitle;
+  final String month;
+  final String year;
 
-  const QuizScreen({required this.examTitle, super.key});
+
+  const QuizScreen({required this.month,required this.year,super.key});
 
   @override
   _QuizScreenState createState() => _QuizScreenState();
@@ -15,8 +18,8 @@ class _QuizScreenState extends State<QuizScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedOption;
   List<int?> _userAnswers = [];
-  List<Map<String, dynamic>> _questions = [];
-
+  List<String?> question_answer =[];
+   List<Question> _questions = [];
   final double circleDiameter = 70.0;
   final double contentPadding = 20.0;
   final double verticalSpacing = 15.0;
@@ -28,15 +31,13 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _loadQuestions() async {
+    print("Load Question.....");
     final dbHelper = DatabaseHelper.instance;
-    final fetchedQuestions = await dbHelper.getQuestions();
-
+    final fetchedQuestions = await dbHelper.getQuestions(widget.year,widget.month);
+    print("########");
+    print(fetchedQuestions);
     setState(() {
-      _questions = fetchedQuestions.map((q) => {
-            'questionText': q['question_text'],
-            'options': [q['option1'], q['option2'], q['option3'], q['option4']],
-            'correctAnswerIndex': q['correct_index'],
-          }).toList();
+      _questions = fetchedQuestions;
 
       _userAnswers = List.filled(_questions.length, null);
       _selectedOption = _userAnswers[0];
@@ -69,37 +70,37 @@ class _QuizScreenState extends State<QuizScreen> {
         _selectedOption = _userAnswers[_currentQuestionIndex];
       });
     } else {
-      _showResultDialog();
+      //_showResultDialog();
     }
   }
 
-  void _showResultDialog() {
-    int correctCount = 0;
-    for (int i = 0; i < _questions.length; i++) {
-      if (_userAnswers[i] == _questions[i]['correctAnswerIndex']) {
-        correctCount++;
-      }
-    }
+  // void _showResultDialog() {
+  //   int correctCount = 0;
+  //   for (int i = 0; i < _questions.length; i++) {
+  //     if (_userAnswers[i] == _questions[i]['correctAnswerIndex']) {
+  //       correctCount++;
+  //     }
+  //   }
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Quiz Results"),
-        content: Text(
-          "You answered $correctCount out of ${_questions.length} questions correctly for the ${widget.examTitle} quiz!",
-        ),
-        actions: [
-          TextButton(
-            child: const Text("OK"),
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-          )
-        ],
-      ),
-    );
-  }
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => AlertDialog(
+  //       title: const Text("Quiz Results"),
+  //       content: Text(
+  //         "You answered $correctCount out of ${_questions.length} questions correctly for the ${widget.examTitle} quiz!",
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           child: const Text("OK"),
+  //           onPressed: () {
+  //             Navigator.of(context).pop();
+  //             Navigator.of(context).pop();
+  //           },
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -128,24 +129,6 @@ class _QuizScreenState extends State<QuizScreen> {
             child: Container(color: Colors.blue),
           ),
 
-          // Exam Title
-          Positioned(
-            top: 40,
-            left: contentPadding,
-            right: contentPadding,
-            child: SafeArea(
-              bottom: false,
-              child: Text(
-                widget.examTitle,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-
           // Info Row
           Positioned(
             top: 90,
@@ -161,10 +144,10 @@ class _QuizScreenState extends State<QuizScreen> {
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Row(
-                    children: const [
-                      Icon(Icons.person, size: 18, color: Colors.deepPurple),
-                      SizedBox(width: 8),
-                      Text("7 / 40", style: TextStyle(color: Colors.deepPurple, fontSize: 14)),
+                    children: [
+                      const Icon(Icons.person, size: 18, color: Colors.deepPurple),
+                      const SizedBox(width: 8),
+                      Text("${_currentQuestionIndex + 1} / ${_questions.length}", style: const TextStyle(color: Colors.deepPurple, fontSize: 14)),
                     ],
                   ),
                 ),
@@ -196,6 +179,12 @@ class _QuizScreenState extends State<QuizScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     final currentQuestion = _questions[index];
+                     final List<String> answerOptions = [
+                        currentQuestion.answer1 ?? 'Answer 1 (N/A)',
+                        currentQuestion.answer2 ?? 'Answer 2 (N/A)',
+                        currentQuestion.answer3 ?? 'Answer 3 (N/A)',
+                        currentQuestion.answer4 ?? 'Answer 4 (N/A)',
+                      ];
                     return Padding(
                       padding: EdgeInsets.only(
                         top: circleDiameter / 2 + 8,
@@ -232,7 +221,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 18),
-                                  Text(currentQuestion["questionText"], style: const TextStyle(fontSize: 19)),
+                                  Text(currentQuestion.subQuestion.toString(), style: const TextStyle(fontSize: 19)),
                                 ],
                               ),
                             ),
@@ -241,7 +230,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           Expanded(
                             child: ListView.builder(
                               padding: EdgeInsets.zero,
-                              itemCount: currentQuestion["options"].length,
+                              itemCount: answerOptions.length,
                               itemBuilder: (context, optionIndex) {
                                 return SizedBox(
                                   width: availableWidth,
@@ -259,7 +248,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                     ),
                                     margin: const EdgeInsets.symmetric(vertical: 10),
                                     child: RadioListTile<int>(
-                                      title: Text(currentQuestion["options"][optionIndex],
+                                      title: Text(answerOptions[optionIndex],
                                           style: const TextStyle(fontSize: 17)),
                                       value: optionIndex,
                                       groupValue: _selectedOption,

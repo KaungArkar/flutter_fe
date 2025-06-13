@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fequiz/profileScreen.dart';
 import 'package:fequiz/quiz.dart';
@@ -148,11 +149,12 @@ class ExamTypeScreen extends StatelessWidget {
                 children: examTypes.map((exam) {
                   return GestureDetector(
                     onTap: () {
-                      String title = "${exam['month']} ${exam['year']}";
+                      String month = "${exam['month']}";
+                      String year="${exam['year']}";
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => QuizScreen(examTitle: title),
+                          builder: (context) => QuizScreen( month:month,year:year),
                         ),
                       );
                     },

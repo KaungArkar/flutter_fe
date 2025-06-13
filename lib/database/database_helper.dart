@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:fequiz/model/question.dart';
 import 'package:fequiz/model/user.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
@@ -27,7 +28,7 @@ class DatabaseHelper {
 
     // Get the default databases path for your application.
     String databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, 'feqiz_db.db'); // Your database file name
+    String path = join(databasesPath, 'feqiz.db'); // Your database file name
     print("kdsfkdsf");
     print(path);
 
@@ -42,7 +43,7 @@ class DatabaseHelper {
         await Directory(dirname(path)).create(recursive: true);
 
         // Load the database from assets as a byte data.
-        ByteData data = await rootBundle.load(join("assets", "database", "fequiz_db.db"));
+        ByteData data = await rootBundle.load(join("assets", "database", "fequiz.db"));
         List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
         // Write the bytes to the new database file.
@@ -109,9 +110,33 @@ class DatabaseHelper {
 
   // --- CRUD Operations for Questions ---
 
-  Future<List<Map<String, dynamic>>> getQuestions() async {
+  Future<List<Question>> getQuestions(String year,String month ) async {
     Database db = await database;
-    return await db.query('questions');
+   final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT
+          q.id,
+          q.sub_question,
+          q.answer_a,
+          q.answer_b,
+          q.answer_c,
+          q.answer_d,
+          q.correct_answer
+      FROM
+          questions AS q
+      JOIN
+          year AS y ON q.year_id = y.id
+      WHERE
+          y.year = ? AND y.month = ?
+    ''', [year, month]); // Order of parameters matters!
+
+    print(
+        "Fetched ${maps.length} questions for Year: $year, Month: $month");
+    print("Query results: $maps");
+
+    // Convert the List<Map<String, dynamic>> into a List<Question>.
+    return List.generate(maps.length, (i) {
+      return Question.fromMap(maps[i]);
+    });
   }
 
   // Close the database (optional, as it's often kept open for the app's lifetime)
