@@ -67,6 +67,19 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
+  void _goBack() {
+    if (_currentQuestionIndex > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+      setState(() {
+        _currentQuestionIndex--;
+        _selectedOption = _userAnswers[_currentQuestionIndex];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -289,27 +302,45 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
 
-          // Next Button
+          // Back + Next Buttons Row
           Positioned(
             left: contentPadding,
             right: contentPadding,
             bottom: 16,
-            child: SizedBox(
-              height: 55,
-              child: ElevatedButton(
-                onPressed: _goNext,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6E38CC),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                if (_currentQuestionIndex > 0)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _goBack,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 119, 118, 118),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text("戻る", style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                if (_currentQuestionIndex > 0) const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _goNext,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6E38CC),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _currentQuestionIndex == _questions.length - 1 ? "Finish" : "次へ",
+                      style: const TextStyle(fontSize: 20),
+                    ),
                   ),
                 ),
-                child: Text(
-                  _currentQuestionIndex == _questions.length - 1 ? "Finish" : "次へ",
-                  style: const TextStyle(fontSize: 20),
-                ),
-              ),
+              ],
             ),
           ),
         ],
