@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fequiz/profileScreen.dart';
 import 'package:fequiz/history.dart';
-import 'package:fequiz/quiz.dart'; // ✅ Update path if your file is named differently
+import 'package:fequiz/quiz.dart'; // ✅ Make sure this path is correct
 
 void main() {
   runApp(const QuizApp());
@@ -64,9 +64,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const ExamTypeScreen(),
-    const ProfileScreen(),
-    const HistoryScreen(),
+    ExamTypeScreen(),
+    ProfileScreen(),
+    HistoryScreen(),
   ];
 
   @override
@@ -151,6 +151,8 @@ class ExamTypeScreen extends StatelessWidget {
                     onTap: () {
                       String month = exam['month']!;
                       String year = exam['year']!;
+                      print("🧭 Navigating to QuizScreen with $year / $month");
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -225,20 +227,4 @@ class BottomWaveClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Profile Page',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
 }
