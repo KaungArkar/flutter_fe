@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fequiz/profileScreen.dart';
-import 'package:fequiz/quiz.dart';
+import 'package:fequiz/history.dart';
+import 'package:fequiz/quiz.dart'; // ✅ Update path if your file is named differently
 
 void main() {
   runApp(const QuizApp());
@@ -64,9 +64,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    ExamTypeScreen(),
-    ProfileScreen(),
-    MenuScreen(),
+    const ExamTypeScreen(),
+    const ProfileScreen(),
+    const HistoryScreen(),
   ];
 
   @override
@@ -130,10 +130,10 @@ class ExamTypeScreen extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
+          const Positioned(
             top: 50,
             right: 20,
-            child: const CircleAvatar(
+            child: CircleAvatar(
               backgroundImage: AssetImage('assets/images/people.png'),
               radius: 20,
             ),
@@ -149,12 +149,13 @@ class ExamTypeScreen extends StatelessWidget {
                 children: examTypes.map((exam) {
                   return GestureDetector(
                     onTap: () {
-                      String month = "${exam['month']}";
-                      String year="${exam['year']}";
+                      String month = exam['month']!;
+                      String year = exam['year']!;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => QuizScreen( month:month,year:year),
+                          builder: (context) =>
+                              QuizScreen(month: month, year: year),
                         ),
                       );
                     },
@@ -208,17 +209,6 @@ class ExamTypeScreen extends StatelessWidget {
   }
 }
 
-class MenuScreen extends StatelessWidget {
-  const MenuScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text("Menu Page", style: TextStyle(fontSize: 24)),
-    );
-  }
-}
-
 class BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -226,7 +216,8 @@ class BottomWaveClipper extends CustomClipper<Path> {
     path.lineTo(0, size.height - 40);
     var controlPoint = Offset(size.width / 2, size.height);
     var endPoint = Offset(size.width, size.height - 40);
-    path.quadraticBezierTo(controlPoint.dx, controlPoint.dy, endPoint.dx, endPoint.dy);
+    path.quadraticBezierTo(
+        controlPoint.dx, controlPoint.dy, endPoint.dx, endPoint.dy);
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -234,4 +225,20 @@ class BottomWaveClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text(
+          'Profile Page',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
 }
