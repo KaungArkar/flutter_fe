@@ -1,3 +1,4 @@
+// quiz.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fequiz/model/question.dart';
@@ -25,7 +26,11 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Timer? _timer;
   int _secondsElapsed = 0;
-  final int _maxSeconds = 150 * 60; // 150 minutes in seconds
+  final int _maxSeconds = 150 * 60;
+
+  int _correctCount = 0;
+  int _wrongCount = 0;
+  int _skippedCount = 0;
 
   @override
   void initState() {
@@ -40,7 +45,7 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       _questions = fetchedQuestions;
       _userAnswers = List.filled(_questions.length, null);
-      _selectedOption = _userAnswers[0];
+      _selectedOption = _userAnswers.isNotEmpty ? _userAnswers[0] : null;
     });
   }
 
@@ -51,13 +56,52 @@ class _QuizScreenState extends State<QuizScreen> {
       setState(() {
         _secondsElapsed++;
         if (_secondsElapsed >= _maxSeconds) {
-          _timer?.cancel();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HistoryScreen()),
-          );
+          _processAnswerSummaryAndNavigate();
         }
       });
     });
+  }
+
+  void _processAnswerSummaryAndNavigate() {
+    // ✅ Save current question's answer before processing
+    _userAnswers[_currentQuestionIndex] = _selectedOption;
+
+    _calculateAnswerSummary();
+    _timer?.cancel();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => HistoryScreen(
+          correct: _correctCount,
+          total: _questions.length,
+        ),
+      ),
+    );
+  }
+
+  void _calculateAnswerSummary() {
+    _correctCount = 0;
+    _wrongCount = 0;
+    _skippedCount = 0;
+
+    for (int i = 0; i < _questions.length; i++) {
+      final userAnswer = _userAnswers[i];
+      final correctAnswer = _questions[i].correctAnswer;
+
+      if (userAnswer == null) {
+        _skippedCount++;
+      } else if (userAnswer  == correctAnswer) {
+        _correctCount++;
+      } else {
+        _wrongCount++;
+      }
+    }
+
+    // Debug logging
+    print("\n====== Answer Summary ======");
+    print("Total Questions : ${_questions.length}");
+    print("Correct          : $_correctCount ✅");
+    print("Wrong            : $_wrongCount ❌");
+    print("Skipped          : $_skippedCount ⏭️");
   }
 
   @override
@@ -68,13 +112,6 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _goNext() {
-    if (_selectedOption == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an option before proceeding!")),
-      );
-      return;
-    }
-
     _userAnswers[_currentQuestionIndex] = _selectedOption;
 
     if (_currentQuestionIndex < _questions.length - 1) {
@@ -87,10 +124,7 @@ class _QuizScreenState extends State<QuizScreen> {
         _selectedOption = _userAnswers[_currentQuestionIndex];
       });
     } else {
-      _timer?.cancel();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HistoryScreen()),
-      );
+      _processAnswerSummaryAndNavigate();
     }
   }
 
@@ -116,7 +150,6 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
     final topBlueHeight = screenHeight * 0.28;
     final questionCardTopOffset = topBlueHeight * 0.60;
 
@@ -227,8 +260,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                 const SizedBox(width: 6),
                                 Text("${index + 1}",
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17)),
+                                        fontWeight: FontWeight.bold, fontSize: 17)),
                               ],
                             ),
                             const SizedBox(height: 18),

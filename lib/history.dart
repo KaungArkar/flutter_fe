@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 
 class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
+  final int correct;
+  final int total;
+
+  const HistoryScreen({super.key, required this.correct, required this.total});
 
   @override
   Widget build(BuildContext context) {
+    final int wrong = total - correct;
+    final double percent = total == 0 ? 0 : (correct / total) * 100;
+    final String percentage = percent.toStringAsFixed(1); // eg. 83.3%
+
     return Scaffold(
       body: Stack(
         children: [
           // Background
           Column(
             children: [
-              // This container will be clipped to create the curve
               Expanded(
                 child: ClipPath(
-                  clipper: ArcClipper(), // Our custom clipper for the curve
+                  clipper: ArcClipper(),
                   child: Container(color: const Color.fromARGB(255, 70, 43, 190)),
                 ),
               ),
@@ -26,7 +32,6 @@ class HistoryScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 60),
-              // ─────────── Trophy Card ───────────
               Align(
                 alignment: Alignment.topCenter,
                 child: Stack(
@@ -52,14 +57,11 @@ class HistoryScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text('おめでとう！',
-                                style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold)),
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 4),
-                            const Text('計算得点 +80 points',
-                                style: TextStyle(fontSize: 18)),
+                            Text('計算得点 $percentage%',
+                                style: const TextStyle(fontSize: 18)),
                             const SizedBox(height: 16),
-                            // :new: Added divider and vertical lines
                             Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -72,30 +74,30 @@ class HistoryScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const _StatItem(
+                                    _StatItem(
                                         icon: Icons.help_outline,
                                         label: '中止',
-                                        count: '10'),
+                                        count: (total - correct - wrong).toString()),
                                     Container(
                                       height: 40,
                                       width: 1,
                                       color: Colors.black12,
                                       margin: const EdgeInsets.symmetric(horizontal: 16),
                                     ),
-                                    const _StatItem(
+                                    _StatItem(
                                         icon: Icons.check_circle,
                                         label: '正解',
-                                        count: '08'),
+                                        count: correct.toString()),
                                     Container(
                                       height: 40,
                                       width: 1,
                                       color: Colors.black12,
                                       margin: const EdgeInsets.symmetric(horizontal: 16),
                                     ),
-                                    const _StatItem(
+                                    _StatItem(
                                         icon: Icons.cancel,
                                         label: '警告',
-                                        count: '02'),
+                                        count: wrong.toString()),
                                   ],
                                 ),
                               ],
@@ -106,14 +108,12 @@ class HistoryScreen extends StatelessWidget {
                     ),
                     Positioned(
                       top: 0,
-                      child: Image.asset('assets/images/trophy.png',
-                          height: 80, width: 80),
+                      child: Image.asset('assets/images/trophy.png', height: 80, width: 80),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              // ─────────── History List Card ───────────
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
@@ -130,8 +130,7 @@ class HistoryScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       const Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         child: Row(
                           children: [
                             Expanded(
@@ -163,35 +162,17 @@ class HistoryScreen extends StatelessWidget {
                       const Divider(height: 1),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           child: Column(
-                            children: const [
+                            children: [
                               HistoryItem(
                                   rank: '1st',
                                   name: '読解',
                                   avatarAsset: 'assets/images/pf1.png',
-                                  score: '80%',
+                                  score: '$percentage%',
                                   coin: 50,
                                   crowned: true),
-                              HistoryItem(
-                                  rank: '2nd',
-                                  name: '潮解',
-                                  avatarAsset: 'assets/images/pf2.png',
-                                  score: '80%',
-                                  coin: 60),
-                              HistoryItem(
-                                  rank: '3rd',
-                                  name: '潮解',
-                                  avatarAsset: 'assets/images/pf3.png',
-                                  score: '70%',
-                                  coin: 60),
-                              HistoryItem(
-                                  rank: '4th',
-                                  name: '潮解',
-                                  avatarAsset: 'assets/images/pf4.png',
-                                  score: '60%',
-                                  coin: 60),
+                              // More dummy entries if needed
                             ],
                           ),
                         ),
@@ -208,33 +189,29 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-/* ───────── Custom Clipper for the Arc ───────── */
+/* ───── ArcClipper, StatItem, HistoryItem are unchanged except for _StatItem being non-const now ───── */
+
 class ArcClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 50); // Start at bottom-left, go up
-    // Quadratic Bezier curve to create the arc
-    path.quadraticBezierTo(
-        size.width / 2, size.height, size.width, size.height - 50);
-    path.lineTo(size.width, 0); // Line to top-right
-    path.close(); // Close the path to form the shape
+    path.lineTo(0, size.height - 50);
+    path.quadraticBezierTo(size.width / 2, size.height, size.width, size.height - 50);
+    path.lineTo(size.width, 0);
+    path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
-    return false; // Only clip once
-  }
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-/* ───────── Stat Item Widget ───────── */
 class _StatItem extends StatelessWidget {
-  const _StatItem(
-      {required this.icon, required this.label, required this.count});
+  const _StatItem({required this.icon, required this.label, required this.count});
   final IconData icon;
   final String label;
   final String count;
+
   @override
   Widget build(BuildContext context) => Column(
         children: [
@@ -259,19 +236,21 @@ class _StatItem extends StatelessWidget {
       );
 }
 
-/* ───────── History Item Widget ───────── */
 class HistoryItem extends StatelessWidget {
-  const HistoryItem(
-      {required this.rank,
-      required this.name,
-      required this.avatarAsset,
-      required this.score,
-      required this.coin,
-      this.crowned = false,
-      super.key});
+  const HistoryItem({
+    required this.rank,
+    required this.name,
+    required this.avatarAsset,
+    required this.score,
+    required this.coin,
+    this.crowned = false,
+    super.key,
+  });
+
   final String rank, name, avatarAsset, score;
   final int coin;
   final bool crowned;
+
   @override
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(bottom: 10),
