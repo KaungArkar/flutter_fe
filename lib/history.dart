@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 
 class HistoryScreen extends StatelessWidget {
   final int correct;
+  final int wrong;
+  final int skipped;
   final int total;
 
-  const HistoryScreen({super.key, required this.correct, required this.total});
+  const HistoryScreen({
+    super.key,
+    required this.correct,
+    required this.wrong,
+    required this.skipped,
+    required this.total,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final int wrong = total - correct;
     final double percent = total == 0 ? 0 : (correct / total) * 100;
-    final String percentage = percent.toStringAsFixed(1); // eg. 83.3%
+    final String percentage = percent.toStringAsFixed(1); // e.g., 83.3%
 
     return Scaffold(
       body: Stack(
@@ -21,10 +28,14 @@ class HistoryScreen extends StatelessWidget {
               Expanded(
                 child: ClipPath(
                   clipper: ArcClipper(),
-                  child: Container(color: const Color.fromARGB(255, 70, 43, 190)),
+                  child:
+                      Container(color: const Color.fromARGB(255, 70, 43, 190)),
                 ),
               ),
-              Expanded(child: Container(color: const Color.fromARGB(255, 102, 116, 199))),
+              Expanded(
+                child:
+                    Container(color: const Color.fromARGB(255, 102, 116, 199)),
+              ),
             ],
           ),
           // Foreground
@@ -56,11 +67,16 @@ class HistoryScreen extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('おめでとう！',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'おめでとう！',
+                              style: TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
                             const SizedBox(height: 4),
-                            Text('計算得点 $percentage%',
-                                style: const TextStyle(fontSize: 18)),
+                            Text(
+                              '計算得点 $percentage%',
+                              style: const TextStyle(fontSize: 18),
+                            ),
                             const SizedBox(height: 16),
                             Column(
                               mainAxisSize: MainAxisSize.min,
@@ -68,7 +84,8 @@ class HistoryScreen extends StatelessWidget {
                                 Container(
                                   height: 1,
                                   color: Colors.black12,
-                                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 20),
                                 ),
                                 const SizedBox(height: 12),
                                 Row(
@@ -77,12 +94,13 @@ class HistoryScreen extends StatelessWidget {
                                     _StatItem(
                                         icon: Icons.help_outline,
                                         label: '中止',
-                                        count: (total - correct - wrong).toString()),
+                                        count: skipped.toString()),
                                     Container(
                                       height: 40,
                                       width: 1,
                                       color: Colors.black12,
-                                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 16),
                                     ),
                                     _StatItem(
                                         icon: Icons.check_circle,
@@ -92,7 +110,8 @@ class HistoryScreen extends StatelessWidget {
                                       height: 40,
                                       width: 1,
                                       color: Colors.black12,
-                                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 16),
                                     ),
                                     _StatItem(
                                         icon: Icons.cancel,
@@ -108,7 +127,8 @@ class HistoryScreen extends StatelessWidget {
                     ),
                     Positioned(
                       top: 0,
-                      child: Image.asset('assets/images/trophy.png', height: 80, width: 80),
+                      child: Image.asset('assets/images/trophy.png',
+                          height: 80, width: 80),
                     ),
                   ],
                 ),
@@ -130,7 +150,8 @@ class HistoryScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         child: Row(
                           children: [
                             Expanded(
@@ -162,17 +183,18 @@ class HistoryScreen extends StatelessWidget {
                       const Divider(height: 1),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           child: Column(
                             children: [
                               HistoryItem(
-                                  rank: '1st',
-                                  name: '読解',
-                                  avatarAsset: 'assets/images/pf1.png',
-                                  score: '$percentage%',
-                                  coin: 50,
-                                  crowned: true),
-                              // More dummy entries if needed
+                                rank: '1st',
+                                name: '読解',
+                                avatarAsset: 'assets/images/pf1.png',
+                                score: '$percentage%',
+                                coin: 50,
+                                crowned: true,
+                              ),
                             ],
                           ),
                         ),
@@ -189,14 +211,13 @@ class HistoryScreen extends StatelessWidget {
   }
 }
 
-/* ───── ArcClipper, StatItem, HistoryItem are unchanged except for _StatItem being non-const now ───── */
-
 class ArcClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
     path.lineTo(0, size.height - 50);
-    path.quadraticBezierTo(size.width / 2, size.height, size.width, size.height - 50);
+    path.quadraticBezierTo(
+        size.width / 2, size.height, size.width, size.height - 50);
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -207,7 +228,8 @@ class ArcClipper extends CustomClipper<Path> {
 }
 
 class _StatItem extends StatelessWidget {
-  const _StatItem({required this.icon, required this.label, required this.count});
+  const _StatItem(
+      {required this.icon, required this.label, required this.count});
   final IconData icon;
   final String label;
   final String count;
@@ -256,49 +278,63 @@ class HistoryItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFF1F1F1)))),
-        child: Row(children: [
-          SizedBox(
+          border: Border(bottom: BorderSide(color: Color(0xFFF1F1F1))),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
               width: 40,
               child: Text(rank,
                   style: const TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
-                      fontWeight: FontWeight.bold))),
-          const SizedBox(width: 10),
-          Stack(alignment: Alignment.topRight, children: [
-            CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: AssetImage(avatarAsset)),
-            if (crowned)
-              const Positioned(
-                  top: -2,
-                  right: -2,
-                  child:
-                      Icon(Icons.emoji_events, size: 20, color: Colors.amber))
-          ]),
-          const SizedBox(width: 16),
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
-              Row(children: [
-                const Text('Won', style: TextStyle(color: Colors.grey)),
-                const SizedBox(width: 4),
-                const Icon(Icons.monetization_on,
-                    size: 16, color: Colors.amber),
-                Text(' $coin', style: const TextStyle(color: Colors.grey))
-              ])
-            ]),
-          ),
-          Text(score,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Color(0xFF6C4DF2)))
-        ]),
+                      fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 10),
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: AssetImage(avatarAsset),
+                ),
+                if (crowned)
+                  const Positioned(
+                    top: -2,
+                    right: -2,
+                    child:
+                        Icon(Icons.emoji_events, size: 20, color: Colors.amber),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                  Row(
+                    children: [
+                      const Text('Won', style: TextStyle(color: Colors.grey)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.monetization_on,
+                          size: 16, color: Colors.amber),
+                      Text(' $coin',
+                          style: const TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Text(score,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF6C4DF2))),
+          ],
+        ),
       );
 }

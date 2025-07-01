@@ -1,4 +1,3 @@
-// quiz.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fequiz/model/question.dart';
@@ -41,7 +40,8 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Future<void> _loadQuestions() async {
     final dbHelper = DatabaseHelper.instance;
-    final fetchedQuestions = await dbHelper.getQuestions(widget.year, widget.month);
+    final fetchedQuestions =
+        await dbHelper.getQuestions(widget.year, widget.month);
     setState(() {
       _questions = fetchedQuestions;
       _userAnswers = List.filled(_questions.length, null);
@@ -63,15 +63,15 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _processAnswerSummaryAndNavigate() {
-    // ✅ Save current question's answer before processing
     _userAnswers[_currentQuestionIndex] = _selectedOption;
-
     _calculateAnswerSummary();
     _timer?.cancel();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => HistoryScreen(
           correct: _correctCount,
+          wrong: _wrongCount,
+          skipped: _skippedCount,
           total: _questions.length,
         ),
       ),
@@ -87,28 +87,36 @@ class _QuizScreenState extends State<QuizScreen> {
       final userAnswer = _userAnswers[i];
       final correctAnswer = _questions[i].correctAnswer;
 
+      String? userAnswerChar;
+      switch (userAnswer) {
+        case 0:
+          userAnswerChar = 'a';
+          break;
+        case 1:
+          userAnswerChar = 'b';
+          break;
+        case 2:
+          userAnswerChar = 'c';
+          break;
+        case 3:
+          userAnswerChar = 'd';
+          break;
+        default:
+          userAnswerChar = null;
+      }
+
       if (userAnswer == null) {
         _skippedCount++;
-      } else if (userAnswer  == correctAnswer) {
+      } else if (userAnswerChar == correctAnswer) {
         _correctCount++;
       } else {
         _wrongCount++;
       }
     }
 
-    // Debug logging
-    print("\n====== Answer Summary ======");
-    print("Total Questions : ${_questions.length}");
-    print("Correct          : $_correctCount ✅");
-    print("Wrong            : $_wrongCount ❌");
-    print("Skipped          : $_skippedCount ⏭️");
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _timer?.cancel();
-    super.dispose();
+    print("✅ Correct: $_correctCount");
+    print("❌ Wrong: $_wrongCount");
+    print("⏭ Skipped: $_skippedCount");
   }
 
   void _goNext() {
@@ -148,6 +156,13 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final topBlueHeight = screenHeight * 0.28;
@@ -163,6 +178,7 @@ class _QuizScreenState extends State<QuizScreen> {
       backgroundColor: Colors.deepPurple.shade50,
       body: Stack(
         children: [
+          // background
           Positioned(
             top: 0,
             left: 0,
@@ -170,6 +186,8 @@ class _QuizScreenState extends State<QuizScreen> {
             height: topBlueHeight,
             child: Container(color: Colors.blue),
           ),
+
+          // header
           Positioned(
             top: 90,
             left: contentPadding,
@@ -178,32 +196,41 @@ class _QuizScreenState extends State<QuizScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.person, size: 18, color: Colors.deepPurple),
+                      const Icon(Icons.person,
+                          size: 18, color: Colors.deepPurple),
                       const SizedBox(width: 8),
-                      Text("${_currentQuestionIndex + 1} / ${_questions.length}",
-                          style: const TextStyle(color: Colors.deepPurple, fontSize: 14)),
+                      Text(
+                          "${_currentQuestionIndex + 1} / ${_questions.length}",
+                          style: const TextStyle(
+                              color: Colors.deepPurple, fontSize: 14)),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: Text("${_currentQuestionIndex + 1} / ${_questions.length}",
-                      style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  child: Text(
+                      "${_currentQuestionIndex + 1} / ${_questions.length}",
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 14)),
                 ),
               ],
             ),
           ),
+
+          // question card
           Positioned(
             top: questionCardTopOffset,
             left: 0,
@@ -216,10 +243,10 @@ class _QuizScreenState extends State<QuizScreen> {
               itemBuilder: (context, index) {
                 final question = _questions[index];
                 final answerOptions = [
-                  question.answer1 ?? 'Answer 1 (N/A)',
-                  question.answer2 ?? 'Answer 2 (N/A)',
-                  question.answer3 ?? 'Answer 3 (N/A)',
-                  question.answer4 ?? 'Answer 4 (N/A)',
+                  question.answer1 ?? 'Answer 1',
+                  question.answer2 ?? 'Answer 2',
+                  question.answer3 ?? 'Answer 3',
+                  question.answer4 ?? 'Answer 4',
                 ];
 
                 return Padding(
@@ -243,13 +270,15 @@ class _QuizScreenState extends State<QuizScreen> {
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.shade100,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Text("Hint",
-                                      style: TextStyle(color: Colors.orange, fontSize: 15)),
+                                      style: TextStyle(
+                                          color: Colors.orange, fontSize: 15)),
                                 ),
                                 const SizedBox(width: 10),
                                 Text("問題",
@@ -260,7 +289,8 @@ class _QuizScreenState extends State<QuizScreen> {
                                 const SizedBox(width: 6),
                                 Text("${index + 1}",
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 17)),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17)),
                               ],
                             ),
                             const SizedBox(height: 18),
@@ -269,11 +299,14 @@ class _QuizScreenState extends State<QuizScreen> {
                               style: const TextStyle(fontSize: 19),
                             ),
                             const SizedBox(height: 25),
-                            ...List.generate(answerOptions.length, (optionIndex) {
+                            ...List.generate(answerOptions.length,
+                                (optionIndex) {
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6.0),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: _selectedOption == optionIndex
@@ -293,12 +326,14 @@ class _QuizScreenState extends State<QuizScreen> {
                                       });
                                     },
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Text(
                                             answerOptions[optionIndex],
-                                            style: const TextStyle(fontSize: 17),
+                                            style:
+                                                const TextStyle(fontSize: 17),
                                           ),
                                         ),
                                         Radio<int>(
@@ -326,6 +361,8 @@ class _QuizScreenState extends State<QuizScreen> {
               },
             ),
           ),
+
+          // timer
           Positioned(
             top: questionCardTopOffset - circleDiameter / 2 + 35,
             left: MediaQuery.of(context).size.width / 2 - circleDiameter / 2,
@@ -357,6 +394,8 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
             ),
           ),
+
+          // buttons
           Positioned(
             left: contentPadding,
             right: contentPadding,
@@ -368,7 +407,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     child: ElevatedButton(
                       onPressed: _goBack,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 119, 118, 118),
+                        backgroundColor: Colors.grey,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -389,7 +428,9 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                     ),
                     child: Text(
-                      _currentQuestionIndex == _questions.length - 1 ? "Finish" : "次へ",
+                      _currentQuestionIndex == _questions.length - 1
+                          ? "Finish"
+                          : "次へ",
                       style: const TextStyle(fontSize: 20),
                     ),
                   ),
