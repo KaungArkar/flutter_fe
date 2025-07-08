@@ -178,7 +178,6 @@ class _QuizScreenState extends State<QuizScreen> {
       backgroundColor: Colors.deepPurple.shade50,
       body: Stack(
         children: [
-          // background
           Positioned(
             top: 0,
             left: 0,
@@ -186,8 +185,6 @@ class _QuizScreenState extends State<QuizScreen> {
             height: topBlueHeight,
             child: Container(color: Colors.blue),
           ),
-
-          // header
           Positioned(
             top: 90,
             left: contentPadding,
@@ -229,8 +226,6 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
             ),
           ),
-
-          // question card
           Positioned(
             top: questionCardTopOffset,
             left: 0,
@@ -298,7 +293,16 @@ class _QuizScreenState extends State<QuizScreen> {
                               question.subQuestion ?? "",
                               style: const TextStyle(fontSize: 19),
                             ),
+
+                            // ⬇️ INSERT STATIC IMAGE HERE
+                            const SizedBox(height: 16),
+                            Image.asset(
+                              'assets/images/pf4.png',
+                              height: 200,
+                              fit: BoxFit.contain,
+                            ),
                             const SizedBox(height: 25),
+
                             ...List.generate(answerOptions.length,
                                 (optionIndex) {
                               return Padding(
@@ -361,8 +365,6 @@ class _QuizScreenState extends State<QuizScreen> {
               },
             ),
           ),
-
-          // timer
           Positioned(
             top: questionCardTopOffset - circleDiameter / 2 + 35,
             left: MediaQuery.of(context).size.width / 2 - circleDiameter / 2,
@@ -394,8 +396,6 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
             ),
           ),
-
-          // buttons
           Positioned(
             left: contentPadding,
             right: contentPadding,
