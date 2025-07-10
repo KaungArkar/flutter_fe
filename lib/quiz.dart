@@ -1,6 +1,11 @@
+// ============================
+// quiz.dart (Updated with dynamic question images)
+// ============================
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fequiz/model/question.dart';
+import 'package:fequiz/model/question_image.dart';
 import 'package:fequiz/database/database_helper.dart';
 import 'package:fequiz/history.dart';
 
@@ -20,6 +25,8 @@ class _QuizScreenState extends State<QuizScreen> {
   int? _selectedOption;
   List<int?> _userAnswers = [];
   List<Question> _questions = [];
+  List<QuestionImage> _questionsImage = [];
+  Map<int, Uint8List?> _questionImages = {}; // question_id -> image
   final double circleDiameter = 70.0;
   final double contentPadding = 20.0;
 
@@ -35,15 +42,43 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     _loadQuestions();
+    _loadQuestionsImage();
     _startTimer();
   }
 
   Future<void> _loadQuestions() async {
     final dbHelper = DatabaseHelper.instance;
-    final fetchedQuestions =
-        await dbHelper.getQuestions(widget.year, widget.month);
+    final fetchedQuestions = await dbHelper.getQuestions(widget.year, widget.month);
+    final Map<int, Uint8List?> images = {};
+    for (var q in fetchedQuestions) {
+      if (q.id != null) {
+        final img = await dbHelper.getQuestionImageByQuestionId(q.id!);
+        images[q.id!] = img?.questionImage;
+      }
+    }
     setState(() {
       _questions = fetchedQuestions;
+      _questionImages = images;
+      _userAnswers = List.filled(_questions.length, null);
+      _selectedOption = _userAnswers.isNotEmpty ? _userAnswers[0] : null;
+    });
+  }
+
+  Future<void> _loadQuestionsImage() async {
+    print("loadQuestionImage");
+    final dbHelper = DatabaseHelper.instance;
+    final fetchedQuestions = await dbHelper.getAllQuestionImages();
+    print("fetchedQuestion$fetchedQuestions");
+    final Map<int, Uint8List?> images = {};
+    for (var q in fetchedQuestions) {
+      if (q.id != null) {
+        final img = await dbHelper.getQuestionImageByQuestionId(q.id!);
+        images[q.id!] = img?.questionImage;
+      }
+    }
+    setState(() {
+      _questionsImage = fetchedQuestions;
+      _questionImages = images;
       _userAnswers = List.filled(_questions.length, null);
       _selectedOption = _userAnswers.isNotEmpty ? _userAnswers[0] : null;
     });
@@ -113,10 +148,6 @@ class _QuizScreenState extends State<QuizScreen> {
         _wrongCount++;
       }
     }
-
-    print("✅ Correct: $_correctCount");
-    print("❌ Wrong: $_wrongCount");
-    print("⏭ Skipped: $_skippedCount");
   }
 
   void _goNext() {
@@ -193,35 +224,26 @@ class _QuizScreenState extends State<QuizScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.person,
-                          size: 18, color: Colors.deepPurple),
+                      const Icon(Icons.person, size: 18, color: Colors.deepPurple),
                       const SizedBox(width: 8),
-                      Text(
-                          "${_currentQuestionIndex + 1} / ${_questions.length}",
-                          style: const TextStyle(
-                              color: Colors.deepPurple, fontSize: 14)),
+                      Text("${_currentQuestionIndex + 1} / ${_questions.length}", style: const TextStyle(color: Colors.deepPurple, fontSize: 14)),
                     ],
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.orange,
                     borderRadius: BorderRadius.circular(25),
                   ),
-                  child: Text(
-                      "${_currentQuestionIndex + 1} / ${_questions.length}",
-                      style:
-                          const TextStyle(color: Colors.white, fontSize: 14)),
+                  child: Text("${_currentQuestionIndex + 1} / ${_questions.length}", style: const TextStyle(color: Colors.white, fontSize: 14)),
                 ),
               ],
             ),
@@ -244,16 +266,12 @@ class _QuizScreenState extends State<QuizScreen> {
                   question.answer4 ?? 'Answer 4',
                 ];
 
+                final imageBytes = _questionImages[question.id ?? -1];
+
                 return Padding(
-                  padding: EdgeInsets.only(
-                    top: circleDiameter / 2 + 8,
-                    left: contentPadding,
-                    right: contentPadding,
-                  ),
+                  padding: EdgeInsets.only(top: circleDiameter / 2 + 8, left: contentPadding, right: contentPadding),
                   child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                     elevation: 5,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(18),
@@ -265,63 +283,37 @@ class _QuizScreenState extends State<QuizScreen> {
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.shade100,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Text("Hint",
-                                      style: TextStyle(
-                                          color: Colors.orange, fontSize: 15)),
+                                  child: const Text("Hint", style: TextStyle(color: Colors.orange, fontSize: 15)),
                                 ),
                                 const SizedBox(width: 10),
-                                Text("問題",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17,
-                                        color: Colors.grey.shade700)),
+                                Text("問題", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.grey.shade700)),
                                 const SizedBox(width: 6),
-                                Text("${index + 1}",
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17)),
+                                Text("${index + 1}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
                               ],
                             ),
                             const SizedBox(height: 18),
-                            Text(
-                              question.subQuestion ?? "",
-                              style: const TextStyle(fontSize: 19),
-                            ),
-
-                            // ⬇️ INSERT STATIC IMAGE HERE
+                            Text(question.subQuestion ?? "", style: const TextStyle(fontSize: 19)),
                             const SizedBox(height: 16),
-                            Image.asset(
-                              'assets/images/pf4.png',
-                              height: 200,
-                              fit: BoxFit.contain,
-                            ),
+                            if (imageBytes != null)
+                              Image.memory(imageBytes, height: 200, fit: BoxFit.contain),
                             const SizedBox(height: 25),
-
-                            ...List.generate(answerOptions.length,
-                                (optionIndex) {
+                            ...List.generate(answerOptions.length, (optionIndex) {
                               return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 6.0),
+                                padding: const EdgeInsets.symmetric(vertical: 6.0),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: _selectedOption == optionIndex
-                                          ? Colors.orange
-                                          : Colors.grey.shade300,
+                                      color: _selectedOption == optionIndex ? Colors.orange : Colors.grey.shade300,
                                       width: 1.5,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
-                                    color: _selectedOption == optionIndex
-                                        ? Colors.orange.shade50
-                                        : Colors.white,
+                                    color: _selectedOption == optionIndex ? Colors.orange.shade50 : Colors.white,
                                   ),
                                   child: InkWell(
                                     onTap: () {
@@ -330,16 +322,9 @@ class _QuizScreenState extends State<QuizScreen> {
                                       });
                                     },
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            answerOptions[optionIndex],
-                                            style:
-                                                const TextStyle(fontSize: 17),
-                                          ),
-                                        ),
+                                        Expanded(child: Text(answerOptions[optionIndex], style: const TextStyle(fontSize: 17))),
                                         Radio<int>(
                                           value: optionIndex,
                                           groupValue: _selectedOption,
@@ -373,9 +358,7 @@ class _QuizScreenState extends State<QuizScreen> {
               height: circleDiameter,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: SweepGradient(
-                  colors: [Colors.deepPurple, Colors.orange, Colors.deepPurple],
-                ),
+                gradient: SweepGradient(colors: [Colors.deepPurple, Colors.orange, Colors.deepPurple]),
               ),
               child: Container(
                 margin: const EdgeInsets.all(4),
@@ -386,11 +369,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: Center(
                   child: Text(
                     _formatTimer(_secondsElapsed),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.deepPurple,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.deepPurple),
                   ),
                 ),
               ),
@@ -409,9 +388,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Text("戻る", style: TextStyle(fontSize: 18)),
                     ),
@@ -423,14 +400,10 @@ class _QuizScreenState extends State<QuizScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6E38CC),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      _currentQuestionIndex == _questions.length - 1
-                          ? "Finish"
-                          : "次へ",
+                      _currentQuestionIndex == _questions.length - 1 ? "Finish" : "次へ",
                       style: const TextStyle(fontSize: 20),
                     ),
                   ),
