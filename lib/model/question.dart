@@ -39,5 +39,7 @@ Map<String, dynamic> toMap() {
     );
   }
 
+  get questionImage => null;
+
 
 }

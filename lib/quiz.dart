@@ -25,8 +25,9 @@ class _QuizScreenState extends State<QuizScreen> {
   int? _selectedOption;
   List<int?> _userAnswers = [];
   List<Question> _questions = [];
-  List<QuestionImage> _questionsImage = [];
-  Map<int, Uint8List?> _questionImages = {}; // question_id -> image
+  List<QuestionImage> _questionImage = [];
+  Map<int, Uint8List?> _questionImagesMap = {};
+
   final double circleDiameter = 70.0;
   final double contentPadding = 20.0;
 
@@ -42,48 +43,33 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     _loadQuestions();
-    _loadQuestionsImage();
     _startTimer();
   }
 
   Future<void> _loadQuestions() async {
     final dbHelper = DatabaseHelper.instance;
     final fetchedQuestions = await dbHelper.getQuestions(widget.year, widget.month);
-    final Map<int, Uint8List?> images = {};
-    for (var q in fetchedQuestions) {
-      if (q.id != null) {
-        final img = await dbHelper.getQuestionImageByQuestionId(q.id!);
-        images[q.id!] = img?.questionImage;
+    // Fetch all question images
+    final fetchedQuestionImages = await dbHelper.getAllQuestionImages();
+      // Create a map for quick lookup of images by questionId
+    final Map<int, Uint8List?> tempImageMap = {};
+    for (var qImage in fetchedQuestionImages) {
+      // ignore: unnecessary_null_comparison
+      if (qImage.questionId != null) {
+        tempImageMap[qImage.questionId] = qImage.questionImage;
       }
     }
     setState(() {
       _questions = fetchedQuestions;
-      _questionImages = images;
+      _questionImagesMap = tempImageMap; // Populate the map
       _userAnswers = List.filled(_questions.length, null);
       _selectedOption = _userAnswers.isNotEmpty ? _userAnswers[0] : null;
     });
   }
-
-  Future<void> _loadQuestionsImage() async {
-    print("loadQuestionImage");
-    final dbHelper = DatabaseHelper.instance;
-    final fetchedQuestions = await dbHelper.getAllQuestionImages();
-    print("fetchedQuestion$fetchedQuestions");
-    final Map<int, Uint8List?> images = {};
-    for (var q in fetchedQuestions) {
-      if (q.id != null) {
-        final img = await dbHelper.getQuestionImageByQuestionId(q.id!);
-        images[q.id!] = img?.questionImage;
-      }
-    }
-    setState(() {
-      _questionsImage = fetchedQuestions;
-      _questionImages = images;
-      _userAnswers = List.filled(_questions.length, null);
-      _selectedOption = _userAnswers.isNotEmpty ? _userAnswers[0] : null;
-    });
+  Uint8List? getImageForQuestion(int? questionId) {
+    if (questionId == null) return null;
+        return _questionImagesMap[questionId];
   }
-
   void _startTimer() {
     _secondsElapsed = 0;
     _timer?.cancel();
@@ -101,6 +87,7 @@ class _QuizScreenState extends State<QuizScreen> {
     _userAnswers[_currentQuestionIndex] = _selectedOption;
     _calculateAnswerSummary();
     _timer?.cancel();
+    print("correct$_correctCount");
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => HistoryScreen(
@@ -265,9 +252,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   question.answer3 ?? 'Answer 3',
                   question.answer4 ?? 'Answer 4',
                 ];
-
-                final imageBytes = _questionImages[question.id ?? -1];
-
+                final imageBytes = getImageForQuestion(question.id);
                 return Padding(
                   padding: EdgeInsets.only(top: circleDiameter / 2 + 8, left: contentPadding, right: contentPadding),
                   child: Card(
@@ -299,8 +284,13 @@ class _QuizScreenState extends State<QuizScreen> {
                             const SizedBox(height: 18),
                             Text(question.subQuestion ?? "", style: const TextStyle(fontSize: 19)),
                             const SizedBox(height: 16),
-                            if (imageBytes != null)
-                              Image.memory(imageBytes, height: 200, fit: BoxFit.contain),
+                            if (imageBytes != null) ...[
+                              Image.memory(
+                                imageBytes,
+                                height: 200,
+                                fit: BoxFit.contain,
+                              ),
+                            ],
                             const SizedBox(height: 25),
                             ...List.generate(answerOptions.length, (optionIndex) {
                               return Padding(

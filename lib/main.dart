@@ -64,9 +64,9 @@ class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    ExamTypeScreen(),
-    ProfileScreen(),
-    HistoryScreen(),
+     ExamTypeScreen(),
+     ProfileScreen(),
+    // Removed HistoryScreen() here because it needs parameters
   ];
 
   @override

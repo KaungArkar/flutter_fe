@@ -6,8 +6,6 @@ import 'package:fequiz/model/user.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -15,20 +13,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-   // Initialize your database helper
+  // Initialize your database helper
   final dbHelper = DatabaseHelper.instance;
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
   final nameController = TextEditingController();
-  Uint8List? _selectedImageBytes; 
+  Uint8List? _selectedImageBytes;
   List<User> _users = [];
 
-
-    @override
+  @override
   void initState() {
     super.initState();
     _loadImages();
   }
+
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -40,11 +38,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
   }
+
   Future<void> insertUser() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (_selectedImageBytes != null && nameController.text.isNotEmpty) {
-      await dbHelper.insertUser(User(userName: nameController.text, userImage: _selectedImageBytes!));
+      await dbHelper.insertUser(
+          User(userName: nameController.text, userImage: _selectedImageBytes!));
 
       setState(() {
         nameController.clear();
@@ -52,13 +52,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User Created Successfully')),
-      ); 
+      );
       Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) =>  ExamTypeScreen()),
-  ); 
+        MaterialPageRoute(builder: (context) => ExamTypeScreen()),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image and enter a title.')),
+        const SnackBar(
+            content: Text('Please select an image and enter a title.')),
       );
     }
   }
@@ -76,10 +77,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  //method insert data in MySql 
+  //method insert data in MySql
   //connect the database
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     Widget imagePreview;
     if (_imageFile == null) {
@@ -103,9 +104,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             SizedBox(height: 80),
-            Text("QUIZ 4 ✅", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+            Text("QUIZ 4 ✅",
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
             SizedBox(height: 24),
-            Text('サインアップ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text('サインアップ',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             SizedBox(height: 24),
             GestureDetector(
               onTap: _pickImage,
@@ -122,7 +125,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: 24),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text("名前", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("名前",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             SizedBox(height: 8),
             TextField(
@@ -130,20 +134,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white70,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             SizedBox(height: 32),
             ElevatedButton(
-               onPressed: () {
+              onPressed: () {
                 print('Insert Data');
                 insertUser();
-               },
-             
+              },
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 60),
                 backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: Text("サインアップ", style: TextStyle(fontSize: 20)),
             ),
@@ -153,4 +158,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
