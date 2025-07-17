@@ -51,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _selectedImageBytes = null; // Clear selected image
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User Created Successfully')),
+        const SnackBar(content: Text('ユーザー作成は成功しました。')),
       );
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => ExamTypeScreen()),
@@ -59,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please select an image and enter a title.')),
+            content: Text('画像を選択とタイトルを登録する。')),
       );
     }
   }
