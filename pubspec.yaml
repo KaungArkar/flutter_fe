@@ -77,8 +77,12 @@ flutter:
     - assets/images/20232.png
     - assets/images/2022.png
     - assets/images/20222.png
-    - assets/images/avatar.jpg
     - assets/images/people.png
+    - assets/images/trophy.png
+    - assets/images/pf1.png
+    - assets/images/pf2.png
+    - assets/images/pf3.png
+    - assets/images/pf4.png
     # database accept
     - assets/database/fequiz.db
 
