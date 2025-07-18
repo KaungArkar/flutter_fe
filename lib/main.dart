@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fequiz/profileScreen.dart';
 import 'package:fequiz/history.dart';
-import 'package:fequiz/quiz.dart'; // ✅ Make sure this path is correct
+import 'package:fequiz/quiz.dart';
+import 'package:fequiz/database/database_helper.dart';
+import 'package:fequiz/model/user.dart';
 
 void main() {
   runApp(const QuizApp());
@@ -62,15 +65,31 @@ class MainTabScreen extends StatefulWidget {
 
 class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 0;
+  Uint8List? userImage;
 
-  final List<Widget> _pages = [
-     ExamTypeScreen(),
-     ProfileScreen(),
-    // Removed HistoryScreen() here because it needs parameters
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestUser();
+  }
+
+  Future<void> _loadLatestUser() async {
+    final user = await DatabaseHelper.instance.getLatestUser();
+    if (user != null) {
+      setState(() {
+        userImage = user.userImage;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      ExamTypeScreen(userImage: userImage),
+      ProfileScreen(),
+      Container(), // Placeholder for menu
+    ];
+
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -92,8 +111,14 @@ class _MainTabScreenState extends State<MainTabScreen> {
   }
 }
 
+extension on DatabaseHelper {
+  Future getLatestUser() async {}
+}
+
 class ExamTypeScreen extends StatelessWidget {
-  const ExamTypeScreen({super.key});
+  final Uint8List? userImage;
+
+  const ExamTypeScreen({super.key, this.userImage});
 
   final List<Map<String, String>> examTypes = const [
     {'year': '2024', 'month': 'October', 'image': 'assets/images/2024.png'},
@@ -130,12 +155,15 @@ class ExamTypeScreen extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             top: 50,
             right: 20,
             child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/people.png'),
               radius: 20,
+              backgroundImage: userImage != null
+                  ? MemoryImage(userImage!)
+                  : const AssetImage('assets/images/people.png')
+                      as ImageProvider,
             ),
           ),
           Padding(
